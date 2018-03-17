@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 	//buffer[strcspn(buffer, "\n")] = '\0'; // Remove the trailing \n that fgets adds
 	memset(buffer, '\0', sizeof(buffer));
 	memset(e_plain_key,'\0', sizeof(e_plain_key));
-	e_plain_key[0] = 'e';
+	e_plain_key[0] = 'd';
 	e_plain_key[1] = '#';
 //	e_plain_key[2] = '#';
 	

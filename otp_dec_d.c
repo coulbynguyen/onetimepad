@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 	   strcat(e_plain_key, buffer);
 	}
 	// this function means that a decrypt function tried binding to it
-	if(e_plain_key[0] != 'e'){
+	if(e_plain_key[0] != 'd'){
 	   charsRead = send(establishedConnectionFD, "**", 2, 0); // Send success back
 	   if(charsRead < 0) error("SERVER: ERROR writing to socket");   
 	   do{
@@ -95,7 +95,11 @@ int main(int argc, char *argv[])
 		else{
 			y = key[i] - 65;
 		}
-		z = (x+y)%27;
+		z = (x-y)%27;
+		while(z < 0){
+			z += 27;
+		}
+
 		if(z == 26){
 			z = 32;
 		}
