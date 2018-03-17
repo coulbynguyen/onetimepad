@@ -93,14 +93,30 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	/* this section below checks to see if the characters are good or bad */
-	for(z = 0; z < strlen(key); z++){
-		if((key[z] > 90 || key[z] < 65) && key[z] != 32){
-			badcharflag == 1;
+	int keyflag = 0;
+	int plaintextflag = 0;
+	for(z = 0; z < strlen(key)-1; z++){
+		/*if((key[z] > 90 || key[z] < 65) && key[z] != 32){
+			badcharflag = 1;
+		}*/
+		if(((key[z] >= 65) && (key[z] <= 90)) || (key[z] == 32)){
+			//do nothing
+		}
+		else{
+			badcharflag = 1;
+			keyflag = 1;
 		}
 	}
-	for(z = 0; z < strlen(plaintext); z++){
-		if((key[z] > 90 || key[z] < 65) && key[z] != 32){
-			badcharflag == 1;
+	for(z = 0; z < strlen(plaintext)-1; z++){
+		/*if((plaintext[z] > 90 || plaintext[z] < 65) && plaintext[z] != 32){
+			badcharflag = 1;
+		}*/
+		if(((plaintext[z] >= 65) && (plaintext[z] <= 90)) || (plaintext[z] == 32)){
+			//do nothing
+		}
+		else{
+			badcharflag = 1;
+			plaintextflag = 1;
 		}
 	}
 
