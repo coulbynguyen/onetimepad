@@ -56,12 +56,17 @@ int main(int argc, char *argv[])
 	//memset(buffer, '\0', sizeof(buffer)); // Clear out the buffer array
 	//fgets(buffer, sizeof(buffer) - 1, stdin); // Get input from the user, trunc to buffer - 1 chars, leaving \0
 	//buffer[strcspn(buffer, "\n")] = '\0'; // Remove the trailing \n that fgets adds
+	//
+	//this section of code sets the e_plain_key first letter equal to e so that when the encryption server checks
+	//it knows that it was rightfully called
 	memset(buffer, '\0', sizeof(buffer));
 	memset(e_plain_key,'\0', sizeof(e_plain_key));
 	e_plain_key[0] = 'e';
 	e_plain_key[1] = '#';
 //	e_plain_key[2] = '#';
 	
+	//this section of code reads the data from the plain text file and adds a $ delimiter so
+	//that the server knows when to token the incoming string into the appropriate parts
 	FILE* text_file_descriptor = fopen(argv[1], "r");
 	memset(plaintext,'\0', sizeof(plaintext));
 	if(text_file_descriptor){
@@ -76,6 +81,8 @@ int main(int argc, char *argv[])
 	}
 	
 	// get text from keygen
+	// this section of code reads the data from the "key" text file and adds a @ delimiter 
+	// so that the server knows when to stop reading from the buffer
 	FILE* key_file_descriptor = fopen(argv[2], "r");
 	memset(key,'\0', sizeof(key));
 	if(key_file_descriptor){
@@ -88,13 +95,15 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "bad key file\n");
 		exit(1);
 	}
+
+	//this section of code does the check that makes sure key is at least as long as plain text
 	if(strlen(key) < strlen(plaintext)){
 		fprintf(stderr, "Error: key '%s' is too short\n", argv[2]);
 		exit(1);
 	}
+
 	/* this section below checks to see if the characters are good or bad */
-	int keyflag = 0;
-	int plaintextflag = 0;
+
 	for(z = 0; z < strlen(key)-1; z++){
 		/*if((key[z] > 90 || key[z] < 65) && key[z] != 32){
 			badcharflag = 1;
@@ -104,7 +113,6 @@ int main(int argc, char *argv[])
 		}
 		else{
 			badcharflag = 1;
-			keyflag = 1;
 		}
 	}
 	for(z = 0; z < strlen(plaintext)-1; z++){
@@ -116,7 +124,6 @@ int main(int argc, char *argv[])
 		}
 		else{
 			badcharflag = 1;
-			plaintextflag = 1;
 		}
 	}
 
@@ -125,6 +132,8 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	else{
+	   	//if there are no bad character then the e_plain_text string concats the string onto it and is ready
+		//to send that string to the information
 		strcat(e_plain_key, plaintext);
 		strcat(e_plain_key, key);
 	}
@@ -133,18 +142,22 @@ int main(int argc, char *argv[])
 	charsWritten += send(socketFD, e_plain_key, strlen(e_plain_key), 0); // Write to the server
 	if (charsWritten < 0) error("CLIENT: ERROR writing to socket");
 	/*if (charsWritten < strlen(buffer)) printf("CLIENT: WARNING: Not all data written to socket!\n");*/
+	/*
 	do{
 		ioctl(socketFD, TIOCOUTQ, &checkSend);
-	}while(checkSend > 0);
+	}while(checkSend > 0);*/
 
 	// Get return message from server
 	memset(buffer, '\0', sizeof(buffer)); // Clear out the buffer again for reuse
 	charsRead = recv(socketFD, buffer, sizeof(buffer) - 1, 0); // Read data from the socket, leaving \0 at end
 	strcat(cyphertext, buffer);
 	if (charsRead < 0) error("CLIENT: ERROR reading from socket");
+	//this section of code keeps reading in from the buffer until an @ is found or a * is found
 	while(strstr(cyphertext, "@") == NULL){
-		if(strstr(buffer, "**") != NULL){
-			fprintf(stderr, "could not contact otp_enc_d on port %s\n", argv[3]);
+		if(strstr(cyphertext, "*") != NULL){
+		   	fflush(stderr);
+			//if a star is found from the text then it is known that there was a connection mismatch
+			fprintf(stderr, "could not contact otp_enc_d on port %s\n", argv[3]); fflush(stderr);
 			exit(2);
 		}
 		memset(buffer, '\0', sizeof(buffer)); // Clear out the buffer again for reuse
@@ -153,6 +166,7 @@ int main(int argc, char *argv[])
 
 
 	}
+	//prints out the cyphertext
 	cyphertext[strcspn(cyphertext, "@")] = '\0';
 	//printf("CLIENT: I received this from the server: \"%s\"\n", cyphertext);
 	printf("%s\n", cyphertext);

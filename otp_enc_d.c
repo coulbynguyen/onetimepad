@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
    int active_connections = 0;
    int childExitMethod = 0;
    pid_t anyComplete;
-
+// this section of code initializes all char variables so that they are filled with '\0'
    memset(key, '\0', sizeof(key));
    memset(plaintext, '\0', sizeof(plaintext));
    memset(cyphertext, '\0', sizeof(cyphertext));
@@ -51,7 +51,10 @@ int main(int argc, char *argv[])
    listen(listenSocketFD, 5); // Flip the socket on - it can now receive up to 5 connections
 
 
+   //this while loop executes forever since it is a multiserver
    while(1){
+      //this for loop waits for pids in the array and checks to see if any have completed with no hang
+      //and then decrements the count of active connections if 1 has finished
       for(i = 0; i < num_of_pids; i++){
 	 if(array_of_pids[i] != -1){
 	    anyComplete = waitpid(array_of_pids[i], &childExitMethod, WNOHANG);
@@ -62,16 +65,19 @@ int main(int argc, char *argv[])
 	 }
       }
       // Accept a connection, blocking if one is not available until one connects
+      //this section of code only executes if there are 5 or less active processes
       if(active_connections < 5){
 	 sizeOfClientInfo = sizeof(clientAddress); // Get the size of the address for the client that will connect
 	 establishedConnectionFD = accept(listenSocketFD, (struct sockaddr *)&clientAddress, &sizeOfClientInfo); // Accept
 	 if (establishedConnectionFD < 0) error("ERROR on accept");
 
+	//for each accept this spawns a child
 	 pid_t spawnpid = fork();
-
 	 if(spawnpid == 0){
 	    //child
 	    // Get the message from the client and display it
+	 
+	    //this section of code keeps reading input untill the @ symbol could be found in the received text
 	    memset(buffer, '\0', 256);
 	    charsRead = recv(establishedConnectionFD, buffer, 255, 0); // Read the client's message from the socket
 	    strcat(e_plain_key, buffer);
@@ -83,11 +89,8 @@ int main(int argc, char *argv[])
 	    }
 	    // this function means that a decrypt function tried binding to it
 	    if(e_plain_key[0] != 'e'){
-	       charsRead = send(establishedConnectionFD, "**", 2, 0); // Send success back
+	       charsRead = send(establishedConnectionFD, "*", 2, 0); // Send success back
 	       if(charsRead < 0) error("SERVER: ERROR writing to socket");   
-	       do{
-		  ioctl(establishedConnectionFD, TIOCOUTQ, &checkSend);
-	       }while(checkSend > 0);
 	    }
 
 	    //printf("SERVER: I received this from the client: \"%s\"\n", e_plain_key);
@@ -100,6 +103,10 @@ int main(int argc, char *argv[])
 	    //printf("SERVER: PLAINTEXT: %s\n", plaintext);
 	    //printf("SERVER: KEY: %s\n", key);
 
+	    //this for loop does the arithmetic
+	    //so it takes the characters ascii valu and subtract it from the key 
+	    //ascii value and then if that value is less then 0 it adds 27
+	    //and then sets that value into the cyphertext place
 	    for(i = 0; i < strlen(plaintext); i++){
 	       int x = 0;
 	       int y = 0;

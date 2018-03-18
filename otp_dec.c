@@ -58,10 +58,13 @@ int main(int argc, char *argv[])
 	//buffer[strcspn(buffer, "\n")] = '\0'; // Remove the trailing \n that fgets adds
 	memset(buffer, '\0', sizeof(buffer));
 	memset(e_plain_key,'\0', sizeof(e_plain_key));
+	//adds a d to the beginning to know that this is a description
 	e_plain_key[0] = 'd';
 	e_plain_key[1] = '#';
 //	e_plain_key[2] = '#';
 	
+	//reads text from plaintext
+	//adds a $ to know the split between plaintext and key
 	FILE* text_file_descriptor = fopen(argv[1], "r");
 	memset(plaintext,'\0', sizeof(plaintext));
 	if(text_file_descriptor){
@@ -76,6 +79,7 @@ int main(int argc, char *argv[])
 	}
 	
 	// get text from keygen
+	// and adds a @ so that the server can know to stop reading in from the buffer
 	FILE* key_file_descriptor = fopen(argv[2], "r");
 	memset(key,'\0', sizeof(key));
 	if(key_file_descriptor){
@@ -129,9 +133,11 @@ int main(int argc, char *argv[])
 	charsWritten += send(socketFD, e_plain_key, strlen(e_plain_key), 0); // Write to the server
 	if (charsWritten < 0) error("CLIENT: ERROR writing to socket");
 	/*if (charsWritten < strlen(buffer)) printf("CLIENT: WARNING: Not all data written to socket!\n");*/
+	/*
 	do{
 		ioctl(socketFD, TIOCOUTQ, &checkSend);
 	}while(checkSend > 0);
+	*/
 
 	// Get return message from server
 	memset(buffer, '\0', sizeof(buffer)); // Clear out the buffer again for reuse
@@ -139,8 +145,9 @@ int main(int argc, char *argv[])
 	strcat(cyphertext, buffer);
 	if (charsRead < 0) error("CLIENT: ERROR reading from socket");
 	while(strstr(cyphertext, "@") == NULL){
-		if(strstr(buffer, "**") != NULL){
-			fprintf(stderr, "could not contact otp_enc_d on port %s\n", argv[3]);
+		if(strstr(cyphertext, "*") != NULL){
+		   fflush(stderr);
+			fprintf(stderr, "could not contact otp_enc_d on port %s\n", argv[3]); fflush(stderr);
 			exit(2);
 		}
 		memset(buffer, '\0', sizeof(buffer)); // Clear out the buffer again for reuse
